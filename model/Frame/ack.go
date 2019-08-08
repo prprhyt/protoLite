@@ -7,7 +7,7 @@ import (
 /*
 proto-lite ACK Frame
 In FrameData:
-|LargestAcknowledged(4byte)|FirstACKRange(4byte)|ACKRangeCount(4byte)|ACKRanges|
+|LargestAcknowledged(4byte)|ACKRangeCount(4byte)|ACKRanges|
 
 In ACKRanges
 |ACKRange(4byte)|Gap(4byte)| * ACKRangeCount
@@ -68,9 +68,29 @@ func NewAck(acceptPacketIDs []uint32) *Ack {
 	}
 }
 
+func (self *Ack) GetLossAndAcceptedPacketIDs()([]uint32, []uint32) {
+	loss := []uint32{}
+	accepted := []uint32{}
+	for i,e := range self.ACKRanges{
+		var j uint32 = e.ACKRange+1
+		var k uint32 = 0
+		for ;j<(j+e.Gap);j++ {
+			loss = append(loss, j)
+		}
+		if 0<i {
+			k = self.ACKRanges[i-1].ACKRange + self.ACKRanges[i-1].Gap + 1
+		}
+		for j=k;j<(k+e.ACKRange); j++ {
+			accepted = append(accepted, j)
+		}
+	}
+	return loss,accepted
+}
 
 
-func (self *Ack) ToBytes()([]byte)  {
+
+
+func (self *Ack) ToBytes()([]byte) {
 	ret := []byte{}
 	tmp := []byte{}
 	binary.LittleEndian.PutUint32(tmp, self.LargestAcknowledged)
