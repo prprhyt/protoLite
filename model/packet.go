@@ -1,6 +1,6 @@
 package model
 
-import(
+import (
 	"encoding/binary"
 	"net"
 )
@@ -22,10 +22,25 @@ type Packet struct {
 	FrameData []byte
 }
 
-func (self *Packet) parseFromBytes(rawSrc []byte, remoteAddr net.Addr)(Packet)  {
-	self.Src = remoteAddr.String()
-	self.Id = binary.LittleEndian.Uint32(rawSrc[:4])
-	self.Offset = binary.LittleEndian.Uint32(rawSrc[4:8])
-	self.FrameType = rawSrc[8]
-	self.FrameData = rawSrc[9:]
+func NewPacket(rawSrc []byte, remoteAddr net.Addr) *Packet {
+	return &Packet{
+		remoteAddr.String(),
+		"",
+		binary.LittleEndian.Uint32(rawSrc[:4]),
+		binary.LittleEndian.Uint32(rawSrc[4:8]),
+		rawSrc[8],
+		rawSrc[9:],
+	}
+}
+
+func (self *Packet) ToBytes()([]byte)  {
+	ret := []byte{}
+	tmp := []byte{}
+	binary.LittleEndian.PutUint32(tmp, self.Id)
+	ret = append(ret,tmp...)
+	tmp = []byte{}
+	binary.LittleEndian.PutUint32(tmp, self.Offset)
+	ret = append(ret, self.FrameType)
+	ret = append(ret, self.FrameData...)
+	return ret
 }
