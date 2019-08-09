@@ -22,7 +22,7 @@ type Packet struct {
 	FrameData []byte
 }
 
-func NewPacket(rawSrc []byte, remoteAddr net.Addr) *Packet {
+func NewPacketFromReceiveByte(rawSrc []byte, remoteAddr net.Addr) *Packet {
 	return &Packet{
 		remoteAddr.String(),
 		"",
@@ -33,12 +33,23 @@ func NewPacket(rawSrc []byte, remoteAddr net.Addr) *Packet {
 	}
 }
 
+func NewDataPacketFromPayload(id uint32, offset uint32,rawSrc []byte) *Packet {
+	return &Packet{
+		"",
+		"",
+		id,
+		offset,
+		0x00,
+		rawSrc,
+	}
+}
+
 func (self *Packet) ToBytes()([]byte)  {
 	ret := []byte{}
-	tmp := []byte{}
+	tmp := []byte{0x00,0x00,0x00,0x00}
 	binary.LittleEndian.PutUint32(tmp, self.Id)
 	ret = append(ret,tmp...)
-	tmp = []byte{}
+	tmp = []byte{0x00,0x00,0x00,0x00}
 	binary.LittleEndian.PutUint32(tmp, self.Offset)
 	ret = append(ret, self.FrameType)
 	ret = append(ret, self.FrameData...)

@@ -93,22 +93,19 @@ func (self *Ack) GetLossAndAcceptedPacketIDs()([]uint32, []uint32) {
 	return loss,accepted
 }
 
-
-
-
 func (self *Ack) ToBytes()([]byte) {
 	ret := []byte{}
-	tmp := []byte{}
+	tmp := []byte{0x00, 0x00, 0x00, 0x00}
 	binary.LittleEndian.PutUint32(tmp, self.LargestAcknowledged)
 	ret = append(ret,tmp...)
-	tmp = []byte{}
+	tmp = []byte{0x00, 0x00, 0x00, 0x00}
 	binary.LittleEndian.PutUint32(tmp, self.ACKRangeCount)
 	ret = append(ret,tmp...)
 	for _,i := range self.ACKRanges{
-		tmp = []byte{}
+		tmp = []byte{0x00, 0x00, 0x00, 0x00}
 		binary.LittleEndian.PutUint32(tmp, i.ACKRange)
 		ret = append(ret, tmp...)
-		tmp = []byte{}
+		tmp = []byte{0x00, 0x00, 0x00, 0x00}
 		binary.LittleEndian.PutUint32(tmp, i.Gap)
 		ret = append(ret,tmp...)
 	}
