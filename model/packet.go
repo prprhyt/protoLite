@@ -51,6 +51,7 @@ func (self *Packet) ToBytes()([]byte)  {
 	ret = append(ret,tmp...)
 	tmp = []byte{0x00,0x00,0x00,0x00}
 	binary.LittleEndian.PutUint32(tmp, self.Offset)
+	ret = append(ret,tmp...)
 	ret = append(ret, self.FrameType)
 	ret = append(ret, self.FrameData...)
 	return ret
