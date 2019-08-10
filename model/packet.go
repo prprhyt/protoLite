@@ -6,8 +6,8 @@ import (
 )
 
 /*
-For IPv4
-|id(4bytes)|offset(4byte)|frame_type(1byte)|frame_data()|
+For IPv4: 3009byte
+|id(4bytes)|offset(4byte)|frame_type(1byte)|frame_data(MAX 3000byte)|
 
 srcAddr and dstAddr: get from UDP header
 Byte order: little endian
@@ -20,6 +20,10 @@ type Packet struct {
 	Offset uint32
 	FrameType byte
 	FrameData []byte
+}
+
+func GetPacketByteLength()(int){
+	return 30009
 }
 
 func NewPacketFromReceiveByte(rawSrc []byte, remoteAddr net.Addr) *Packet {
@@ -39,7 +43,22 @@ func NewDataPacketFromPayload(id uint32, offset uint32,rawSrc []byte) *Packet {
 		"",
 		id,
 		offset,
-		0x00,
+		DataFrameType.GetByte(),
+		rawSrc,
+	}
+}
+
+func GetFrameTypeFromRawData(rawSrc []byte) byte{
+	return rawSrc[8]
+}
+
+func NewAckPacketFromPayload(id uint32, offset uint32,rawSrc []byte) *Packet {
+	return &Packet{
+		"",
+		"",
+		id,
+		offset,
+		AckFrameType.GetByte(),
 		rawSrc,
 	}
 }
@@ -55,4 +74,22 @@ func (self *Packet) ToBytes()([]byte)  {
 	ret = append(ret, self.FrameType)
 	ret = append(ret, self.FrameData...)
 	return ret
+}
+
+type FrameType int
+
+const (
+	DataFrameType FrameType = iota
+	AckFrameType
+)
+
+func (e FrameType) GetByte() byte{
+	switch e {
+	case DataFrameType:
+		return 0x00
+	case AckFrameType:
+		return 0x01
+	default:
+		return 0xff
+	}
 }
