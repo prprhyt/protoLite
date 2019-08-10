@@ -4,10 +4,15 @@ import (
 	"github.com/proto-lite/model"
 	"github.com/proto-lite/model/frame"
 	"net"
+	"time"
 )
 func main() {
 	client := NewClient("localhost:8888")
+	defer client.Close()
 	client.Send([]byte("Hello World from Client"))
+	for ; ;  {
+		time.Sleep(1)
+	}
 }
 
 type Client struct {
@@ -24,15 +29,20 @@ func NewClient(dstAddressString string) *Client {
 		panic(err)
 	}
 	client :=  &Client{
-		make(chan model.Packet),
-		make(chan []byte),
+		nil,
+		nil,
 		conn,
 		packets,
 	}
+	client.SenderCh = make(chan model.Packet)
 	go client.sendAsync(client.SenderCh)
+	client.ReceiverCh = make(chan []byte)
 	go client.recvPacket(client.ReceiverCh)
 	go client.recv()
 	return client
+}
+
+func(self *Client)CreateChannel(){
 }
 
 
