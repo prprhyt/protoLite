@@ -19,19 +19,19 @@ func NewPackets()(*Packets){
 	return packets
 }
 
-func(self *Packets) addPacket(packet Packet){
+func(self *Packets) AddPacket(packet Packet){
 	self.Packets = append(self.Packets, packet)
 }
 
-func(self *Packets) AddPacketFromReceiveByte(rawSrc []byte, srcAddr net.Addr)(Packet){
-	packet := NewPacketFromReceiveByte(rawSrc, srcAddr)
-	self.addPacket(*packet)
+func(self *Packets) AddPacketFromReceiveByte(rawSrc []byte, srcAddr net.Addr, dstAddr net.Addr)(Packet){
+	packet := NewPacketFromReceiveByte(rawSrc, srcAddr, dstAddr)
+	self.AddPacket(*packet)
 	return *packet
 }
 
 func(self *Packets) AddNewDataPacket(rawSrc []byte)(Packet){
 	packet := NewDataPacketFromPayload(self.latestId, self.latestOffset, rawSrc)
-	self.addPacket(*packet)
+	self.AddPacket(*packet)
 	self.latestId++
 	self.latestOffset++
 	return *packet
@@ -39,7 +39,7 @@ func(self *Packets) AddNewDataPacket(rawSrc []byte)(Packet){
 
 func(self *Packets) AddNewAckPacket(rawSrc []byte)(Packet){
 	packet := NewAckPacketFromPayload(self.latestId, self.latestOffset, rawSrc)
-	self.addPacket(*packet)
+	self.AddPacket(*packet)
 	self.latestId++
 	self.latestOffset++
 	return *packet
@@ -47,7 +47,7 @@ func(self *Packets) AddNewAckPacket(rawSrc []byte)(Packet){
 
 func(self *Packets) AddResendPacket(packet Packet)(Packet){
 	packet.Id = self.latestId
-	self.addPacket(packet)
+	self.AddPacket(packet)
 	self.latestId++
 	return packet
 }

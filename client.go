@@ -1,27 +1,13 @@
 package main
 
 import (
-	"encoding/binary"
-	"fmt"
 	"github.com/proto-lite/model"
 	"github.com/proto-lite/model/frame"
 	"net"
 )
 func main() {
-	packets := model.NewPackets()
-	Ch := make(chan model.Packet)
-	go send(Ch)
-	data := []byte("Hello from Server")
-	packets.AddNewDataPacket(data)
-	Ch <- packets.GetLatestPacket()
-	/*
-	buffer := make([]byte, 1500)
-	length, err := conn.Read(buffer)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Received: %s\n", string(buffer[:length]))
-	*/
+	client := NewClient("localhost:8888")
+	client.Send([]byte("Hello World from Client"))
 }
 
 type Client struct {
@@ -31,8 +17,8 @@ type Client struct {
 	packets model.Packets
 }
 
-func NewClient(rawSrc []byte, remoteAddr net.Addr) *Client {
-	conn, err := net.Dial("udp4", "localhost:8888")
+func NewClient(dstAddressString string) *Client {
+	conn, err := net.Dial("udp4", dstAddressString)
 	packets := model.Packets{}
 	if err != nil {
 		panic(err)
@@ -65,7 +51,7 @@ func (self *Client)recv() {
 func (self *Client)recvPacket(ch <- chan []byte) {
 	for{
 		i := <- ch
-		packet := self.packets.AddPacketFromReceiveByte(i, self.conn.RemoteAddr())
+		packet := self.packets.AddPacketFromReceiveByte(i, self.conn.LocalAddr(), self.conn.RemoteAddr())
 		if(model.DataFrameType.GetByte() == model.GetFrameTypeFromRawData(i)){
 
 		}else if(model.AckFrameType.GetByte() == model.GetFrameTypeFromRawData(i)){
@@ -81,6 +67,10 @@ func (self *Client)resendLossPackets(){
 	for _,i := range self.packets.GetLossPacketIDs(){
 		self.SenderCh <- self.packets.AddResendPacket(self.packets.Packets[i])
 	}
+}
+
+func (self *Client)Send(data []byte){
+	self.send(self.packets.AddNewDataPacket(data))
 }
 
 func (self *Client)send(packet model.Packet){

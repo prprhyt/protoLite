@@ -14,8 +14,8 @@ Byte order: little endian
 */
 
 type Packet struct {
-	Src string
-	Dst string
+	Src net.Addr
+	Dst net.Addr
 	Id uint32
 	Offset uint32
 	FrameType byte
@@ -26,10 +26,10 @@ func GetPacketByteLength()(int){
 	return 30009
 }
 
-func NewPacketFromReceiveByte(rawSrc []byte, remoteAddr net.Addr) *Packet {
+func NewPacketFromReceiveByte(rawSrc []byte, srcAddr net.Addr, dstAddr net.Addr) *Packet {
 	return &Packet{
-		remoteAddr.String(),
-		"",
+		srcAddr,
+		dstAddr,
 		binary.LittleEndian.Uint32(rawSrc[:4]),
 		binary.LittleEndian.Uint32(rawSrc[4:8]),
 		rawSrc[8],
