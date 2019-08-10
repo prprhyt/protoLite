@@ -39,8 +39,8 @@ func NewPacketFromReceiveByte(rawSrc []byte, srcAddr net.Addr, dstAddr net.Addr)
 
 func NewDataPacketFromPayload(id uint32, offset uint32,rawSrc []byte) *Packet {
 	return &Packet{
-		"",
-		"",
+		nil,
+		nil,
 		id,
 		offset,
 		DataFrameType.GetByte(),
@@ -54,8 +54,8 @@ func GetFrameTypeFromRawData(rawSrc []byte) byte{
 
 func NewAckPacketFromPayload(id uint32, offset uint32,rawSrc []byte) *Packet {
 	return &Packet{
-		"",
-		"",
+		nil,
+		nil,
 		id,
 		offset,
 		AckFrameType.GetByte(),

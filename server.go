@@ -1,12 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"github.com/proto-lite/model"
 	"github.com/proto-lite/model/frame"
 	"net"
 )
 func main() {
-	_ = NewServer("localhost:8888")
+	server := NewServer("localhost:8888")
+	for {
+		server.recv()
+	}
 }
 
 type Server struct {
@@ -30,7 +34,7 @@ func NewServer(remoteAddrString string) *Server {
 	}
 	go server.sendAsync(server.SenderCh)
 	go server.recvPacket(server.ReceiverCh)
-	go server.recv()
+	//go server.recv()
 	return server
 }
 
@@ -38,6 +42,7 @@ func (self *Server)recv() {
 	for{
 		ret :=make([]byte, model.GetPacketByteLength())
 		_, remoteAddress, _ :=self.conn.ReadFrom(ret)
+		fmt.Print("recv")
 		packet := model.NewPacketFromReceiveByte(ret, remoteAddress, self.conn.LocalAddr())
 		self.ReceiverCh <- *packet
 	}
