@@ -54,6 +54,18 @@ func NewClient(srcAddressString string, dstAddressString string) *Client {
 	client.ReceiverCh = make(chan []byte)
 	go client.recvPacket(client.ReceiverCh)
 	go client.recv()
+
+	go func() {
+		t := time.NewTicker(500 * time.Millisecond)
+		for {
+			select {
+			case <-t.C:
+				client.resendUnkownStatePackets()
+			}
+		}
+		t.Stop()
+	}()
+
 	return client
 }
 
@@ -89,14 +101,31 @@ func (self *Client)recvPacket(ch <- chan []byte) {
 	}
 }
 
-func (self *Client)resendLossPackets(){
-	for _,i := range self.recvPackets.GetLossPacketIDs(){
-		self.SenderCh <- self.sendPackets.AddResendPacket(self.sendPackets.Packets[i])
+func (self *Client)resendUnkownStatePackets(){
+	packetID := []uint32{}
+	for _,i := range self.recvPackets.GetSentButUnknownStatePacketIDs(){
+		packet := self.sendPackets.AddResendPacket(self.sendPackets.Packets[i])
+		self.SenderCh <- packet
+		packetID = append(packetID, packet.Id)
 	}
+	self.sendPackets.AddSentButUnknownStatePacketIDs(packetID)
+}
+
+
+func (self *Client)resendLossPackets(){
+	packetID := []uint32{}
+	for _,i := range self.recvPackets.GetLossPacketIDs(){
+		packet := self.sendPackets.AddResendPacket(self.sendPackets.Packets[i])
+		self.SenderCh <- packet
+		packetID = append(packetID, packet.Id)
+	}
+	self.sendPackets.AddSentButUnknownStatePacketIDs(packetID)
 }
 
 func (self *Client)Send(data []byte){
-	self.send(self.sendPackets.AddNewDataPacket(data))
+	packet := self.sendPackets.AddNewDataPacket(data)
+	self.send(packet)
+	self.sendPackets.AddSentButUnknownStatePacketIDs([]uint32{packet.Id})
 }
 
 func (self *Client)send(packet model.Packet){

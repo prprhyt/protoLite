@@ -11,6 +11,7 @@ type Packets struct {
 	latestId uint32
 	latestOffset uint32
 	lossPacketID map[uint32]bool
+	sentButUnknownStatePacketID map[uint32]bool
 	acceptPacketID map[uint32]bool
 	SenderAckCh chan frame.AckAddr
 }
@@ -20,6 +21,7 @@ func NewPackets(SenderAckCh chan frame.AckAddr)(*Packets){
 	packets.latestId = 0
 	packets.latestOffset = 0
 	packets.lossPacketID = make(map[uint32]bool)
+	packets.sentButUnknownStatePacketID = make(map[uint32]bool)
 	packets.acceptPacketID = make(map[uint32]bool)
 	packets.SenderAckCh = SenderAckCh
 	return packets
@@ -84,12 +86,41 @@ func(self *Packets) GetLatestPacket()(Packet){
 	return self.Packets[len(self.Packets)-1]
 }
 
+
+func(self *Packets) AddSentButUnknownStatePacketIDs(ids []uint32){
+	for _,i := range ids{
+		self.sentButUnknownStatePacketID[i] = true
+		_, exist := self.acceptPacketID[i]
+		if(exist){
+			delete(self.sentButUnknownStatePacketID,i)
+		}
+		_, exist = self.lossPacketID[i]
+		if(exist){
+			delete(self.sentButUnknownStatePacketID,i)
+		}
+	}
+}
+
+func(self *Packets) GetSentButUnknownStatePacketIDs()([]uint32){
+	ks := []uint32{}
+	for k, e := range self.sentButUnknownStatePacketID {
+		if(e){
+			ks = append(ks, k)
+		}
+	}
+	return ks
+}
+
 func(self *Packets) AddAcceptPacketIDs(ids []uint32){
 	for _,i := range ids{
 		self.acceptPacketID[i] = true
 		_, exist := self.lossPacketID[i]
 		if(exist){
 			delete(self.lossPacketID,i)
+		}
+		_, exist = self.sentButUnknownStatePacketID[i]
+		if(exist){
+			delete(self.sentButUnknownStatePacketID,i)
 		}
 	}
 }
@@ -100,13 +131,17 @@ func(self *Packets) AddLossPacketIDs(ids []uint32){
 			continue
 		}
 		self.lossPacketID[i] = true
+		_, exist := self.sentButUnknownStatePacketID[i]
+		if(exist){
+			delete(self.sentButUnknownStatePacketID,i)
+		}
 	}
 }
 
 func(self *Packets) GetLossPacketIDs()([]uint32){
 	ks := []uint32{}
-	for k, _ := range self.lossPacketID {
-		if(self.lossPacketID[k]){
+	for k, e := range self.lossPacketID {
+		if(e){
 			ks = append(ks, k)
 		}
 	}
