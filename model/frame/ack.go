@@ -2,6 +2,7 @@ package frame
 
 import (
 	"encoding/binary"
+	"net"
 )
 
 /*
@@ -110,4 +111,9 @@ func (self *Ack) ToBytes()([]byte) {
 		ret = append(ret,tmp...)
 	}
 	return ret
+}
+
+type AckAddr struct {
+	AckFrame Ack
+	SrcAddr net.Addr
 }

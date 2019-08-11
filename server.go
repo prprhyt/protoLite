@@ -16,6 +16,7 @@ func main() {
 type Server struct {
 	SenderCh chan model.Packet
 	ReceiverCh chan model.Packet
+	ackPacketCh chan frame.AckAddr
 	conn net.PacketConn
 	recvPackets model.Packets
 	sendPackets model.Packets
@@ -23,20 +24,24 @@ type Server struct {
 
 func NewServer(remoteAddrString string) *Server {
 	conn, err := net.ListenPacket("udp", remoteAddrString)
-	recvPackets := model.Packets{}
-	sendPackets := model.Packets{}
+	ackPacketCh := make(chan frame.AckAddr)
+	ackPacketChDummy := make(chan frame.AckAddr)
+	recvPackets := model.NewPackets(ackPacketCh)
+	sendPackets := model.NewPackets(ackPacketChDummy)
 	if err != nil {
 		panic(err)
 	}
 	server :=  &Server{
 		make(chan model.Packet),
 		make(chan model.Packet),
+		ackPacketCh,
 		conn,
-		recvPackets,
-		sendPackets,
+		*recvPackets,
+		*sendPackets,
 	}
 	go server.sendAsync(server.SenderCh)
 	go server.recvPacket(server.ReceiverCh)
+	go server.reSendAckPacket(server.ackPacketCh)
 	//go server.recv()
 	return server
 }
@@ -51,10 +56,18 @@ func (self *Server)recv() {
 	}
 }
 
+func (self *Server)reSendAckPacket(ch <- chan frame.AckAddr) {
+	for{
+		i := <- ch
+		self.send(self.sendPackets.AddNewAckPacket(i.SrcAddr, i.AckFrame.ToBytes()))
+	}
+}
+
+
 func (self *Server)recvPacket(ch <- chan model.Packet) {
 	for{
 		i := <- ch
-		self.recvPackets.AddPacket(i)
+		self.recvPackets.AddPacketFromReceivePacket(i)
 		if(model.DataFrameType.GetByte() == i.FrameType){
 
 

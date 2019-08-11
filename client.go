@@ -25,8 +25,9 @@ type Client struct {
 
 func NewClient(dstAddressString string) *Client {
 	conn, err := net.Dial("udp4", dstAddressString)
-	recvPackets := model.Packets{}
-	sendPackets := model.Packets{}
+	ackPacketChDummy := make(chan frame.AckAddr)
+	recvPackets := model.NewPackets(ackPacketChDummy)
+	sendPackets := model.NewPackets(ackPacketChDummy)
 	if err != nil {
 		panic(err)
 	}
@@ -34,8 +35,8 @@ func NewClient(dstAddressString string) *Client {
 		nil,
 		nil,
 		conn,
-		recvPackets,
-		sendPackets,
+		*recvPackets,
+		*sendPackets,
 	}
 	client.SenderCh = make(chan model.Packet)
 	go client.sendAsync(client.SenderCh)
@@ -72,6 +73,7 @@ func (self *Client)recvPacket(ch <- chan []byte) {
 			lossPackets, acPackets := ackFrame.GetLossAndAcceptedPacketIDs()
 			self.recvPackets.AddLossPacketIDs(lossPackets)
 			self.recvPackets.AddAcceptPacketIDs(acPackets)
+			self.resendLossPackets()
 		}
 	}
 }

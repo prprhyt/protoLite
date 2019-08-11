@@ -55,9 +55,9 @@ func GetFrameTypeFromRawData(rawSrc []byte) byte{
 	return rawSrc[8]
 }
 
-func NewAckPacketFromPayload(id uint32, offset uint32,rawSrc []byte) *Packet {
+func NewAckPacketFromPayload(srcAddr net.Addr, id uint32, offset uint32,rawSrc []byte) *Packet {
 	return &Packet{
-		nil,
+		srcAddr,
 		nil,
 		id,
 		offset,

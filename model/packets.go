@@ -1,6 +1,10 @@
 package model
 
-import "net"
+import (
+	"github.com/proto-lite/model/frame"
+	"net"
+	"sort"
+)
 
 type Packets struct {
 	Packets  []Packet
@@ -8,14 +12,16 @@ type Packets struct {
 	latestOffset uint32
 	lossPacketID map[uint32]bool
 	acceptPacketID map[uint32]bool
+	SenderAckCh chan frame.AckAddr
 }
 
-func NewPackets()(*Packets){
+func NewPackets(SenderAckCh chan frame.AckAddr)(*Packets){
 	packets := &Packets{}
 	packets.latestId = 0
 	packets.latestOffset = 0
 	packets.lossPacketID = make(map[uint32]bool)
 	packets.acceptPacketID = make(map[uint32]bool)
+	packets.SenderAckCh = SenderAckCh
 	return packets
 }
 
@@ -23,22 +29,45 @@ func(self *Packets) AddPacket(packet Packet){
 	self.Packets = append(self.Packets, packet)
 }
 
+func(self *Packets) AddPacketFromReceivePacket(packet Packet)(Packet){
+	self.AddPacket(packet)
+	self.AddAcceptPacketIDs([]uint32{packet.Id})
+	if self.latestId+1 == packet.Id{
+		return packet
+	}
+
+	acPackets := []uint32{}
+	for i, j := range self.acceptPacketID {
+		if(j){
+			acPackets = append(acPackets, i)
+		}
+	}
+	sort.Slice(acPackets, func(i, j int) bool {
+		return acPackets[i] < acPackets[j]
+	})
+	self.SenderAckCh <- frame.AckAddr{
+		*frame.NewAck(acPackets),
+		packet.Src,
+	}
+	return packet
+}
+
 func(self *Packets) AddPacketFromReceiveByte(rawSrc []byte, srcAddr net.Addr, dstAddr net.Addr)(Packet){
 	packet := NewPacketFromReceiveByte(rawSrc, srcAddr, dstAddr)
-	self.AddPacket(*packet)
-	return *packet
+	return self.AddPacketFromReceivePacket(*packet)
 }
 
 func(self *Packets) AddNewDataPacket(rawSrc []byte)(Packet){
 	packet := NewDataPacketFromPayload(self.latestId, self.latestOffset, rawSrc)
 	self.AddPacket(*packet)
 	self.latestId++
+	self.latestId++
 	self.latestOffset++
 	return *packet
 }
 
-func(self *Packets) AddNewAckPacket(rawSrc []byte)(Packet){
-	packet := NewAckPacketFromPayload(self.latestId, self.latestOffset, rawSrc)
+func(self *Packets) AddNewAckPacket(srcAddr net.Addr ,rawSrc []byte)(Packet){
+	packet := NewAckPacketFromPayload(srcAddr, self.latestId, self.latestOffset, rawSrc)
 	self.AddPacket(*packet)
 	self.latestId++
 	self.latestOffset++
