@@ -3,11 +3,12 @@ package main
 import (
 	"github.com/proto-lite/model"
 	"github.com/proto-lite/model/frame"
+	"log"
 	"net"
 	"time"
 )
 func main() {
-	client := NewClient("localhost:8888")
+	client := NewClient("192.168.22.1:0", "192.168.22.2:8888")
 	defer client.Close()
 	client.Send([]byte("Hello World from Client"))
 	for ; ;  {
@@ -23,8 +24,18 @@ type Client struct {
 	sendPackets model.Packets
 }
 
-func NewClient(dstAddressString string) *Client {
-	conn, err := net.Dial("udp4", dstAddressString)
+func NewClient(srcAddressString string, dstAddressString string) *Client {
+
+	localUdpAddr, err := net.ResolveUDPAddr("udp4", srcAddressString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	remoteUdpAddr, err := net.ResolveUDPAddr("udp4", dstAddressString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn, err := net.DialUDP("udp4", localUdpAddr, remoteUdpAddr)
 	ackPacketChDummy := make(chan frame.AckAddr)
 	recvPackets := model.NewPackets(ackPacketChDummy)
 	sendPackets := model.NewPackets(ackPacketChDummy)

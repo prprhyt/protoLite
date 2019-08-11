@@ -7,7 +7,7 @@ import (
 	"net"
 )
 func main() {
-	server := NewServer("localhost:8888")
+	server := NewServer(":8888")
 	for {
 		server.recv()
 	}
