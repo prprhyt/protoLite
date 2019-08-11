@@ -17,12 +17,14 @@ type Server struct {
 	SenderCh chan model.Packet
 	ReceiverCh chan model.Packet
 	conn net.PacketConn
-	packets model.Packets
+	recvPackets model.Packets
+	sendPackets model.Packets
 }
 
 func NewServer(remoteAddrString string) *Server {
 	conn, err := net.ListenPacket("udp", remoteAddrString)
-	packets := model.Packets{}
+	recvPackets := model.Packets{}
+	sendPackets := model.Packets{}
 	if err != nil {
 		panic(err)
 	}
@@ -30,7 +32,8 @@ func NewServer(remoteAddrString string) *Server {
 		make(chan model.Packet),
 		make(chan model.Packet),
 		conn,
-		packets,
+		recvPackets,
+		sendPackets,
 	}
 	go server.sendAsync(server.SenderCh)
 	go server.recvPacket(server.ReceiverCh)
@@ -51,22 +54,22 @@ func (self *Server)recv() {
 func (self *Server)recvPacket(ch <- chan model.Packet) {
 	for{
 		i := <- ch
-		self.packets.AddPacket(i)
+		self.recvPackets.AddPacket(i)
 		if(model.DataFrameType.GetByte() == i.FrameType){
 
 
 		}else if(model.AckFrameType.GetByte() == i.FrameType){
 			ackFrame := frame.NewAckFromBinary(i.FrameData)
 			lossPackets, acPackets := ackFrame.GetLossAndAcceptedPacketIDs()
-			self.packets.AddLossPacketIDs(lossPackets)
-			self.packets.AddAcceptPacketIDs(acPackets)
+			self.recvPackets.AddLossPacketIDs(lossPackets)
+			self.recvPackets.AddAcceptPacketIDs(acPackets)
 		}
 	}
 }
 
 func (self *Server)resendLossPackets(){
-	for _,i := range self.packets.GetLossPacketIDs(){
-		self.SenderCh <- self.packets.AddResendPacket(self.packets.Packets[i])
+	for _,i := range self.recvPackets.GetLossPacketIDs(){
+		self.SenderCh <- self.sendPackets.AddResendPacket(self.recvPackets.Packets[i])
 	}
 }
 

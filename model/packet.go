@@ -20,6 +20,9 @@ type Packet struct {
 	Offset uint32
 	FrameType byte
 	FrameData []byte
+
+	/*frame.DATA
+	frame.Ack*/
 }
 
 func GetPacketByteLength()(int){
