@@ -61,7 +61,6 @@ func(self *Packets) AddNewDataPacket(rawSrc []byte)(Packet){
 	packet := NewDataPacketFromPayload(self.latestId, self.latestOffset, rawSrc)
 	self.AddPacket(*packet)
 	self.latestId++
-	self.latestId++
 	self.latestOffset++
 	return *packet
 }
