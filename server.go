@@ -4,14 +4,37 @@ import (
 	"fmt"
 	"github.com/proto-lite/model"
 	"github.com/proto-lite/model/frame"
+	"log"
 	"net"
 	"sort"
 	"time"
 )
 func main() {
-	server := NewServer(":8888")
+	client := NewSubClient("192.168.22.2:0", "192.168.22.1:8889")
+	server := NewServer(":8888", *client)
 	for {
 		server.recv()
+	}
+}
+
+type SubClient struct {
+	Conn net.UDPConn
+}
+
+func NewSubClient(srcAddressString string, dstAddressString string) *SubClient{
+	localUdpAddr, err := net.ResolveUDPAddr("udp4", srcAddressString)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	remoteUdpAddr, err := net.ResolveUDPAddr("udp4", dstAddressString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn, err := net.DialUDP("udp4", localUdpAddr, remoteUdpAddr)
+
+	return &SubClient{
+		*conn,
 	}
 }
 
@@ -22,9 +45,10 @@ type Server struct {
 	conn net.PacketConn
 	recvPackets model.Packets
 	sendPackets model.Packets
+	Client SubClient
 }
 
-func NewServer(remoteAddrString string) *Server {
+func NewServer(remoteAddrString string, client SubClient) *Server {
 	conn, err := net.ListenPacket("udp", remoteAddrString)
 	ackPacketCh := make(chan frame.AckAddr)
 	ackPacketChDummy := make(chan frame.AckAddr)
@@ -40,6 +64,7 @@ func NewServer(remoteAddrString string) *Server {
 		conn,
 		*recvPackets,
 		*sendPackets,
+		client,
 	}
 	go server.sendAsync(server.SenderCh)
 	go server.recvPacket(server.ReceiverCh)
@@ -123,7 +148,8 @@ func (self *Server)send(packet model.Packet){
 func (self *Server)sendAsync(ch <-chan model.Packet)  {
 	for {
 		i := <- ch
-		_, err := self.conn.WriteTo(i.ToBytes(), i.Src)
+		//_, err := self.conn.WriteTo(i.ToBytes(), i.Src)
+		_, err := self.Client.Conn.Write(i.ToBytes())
 		if err != nil {
 			panic(err)
 		}

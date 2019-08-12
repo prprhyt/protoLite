@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/proto-lite/model"
 	"github.com/proto-lite/model/frame"
 	"log"
@@ -9,12 +10,27 @@ import (
 	"time"
 )
 func main() {
-	client := NewClient("192.168.22.1:0", "192.168.22.2:8888")
+	server := NewSubServer(":8889")
+	client := NewClient("192.168.22.1:0", "192.168.22.2:8888", *server)
 	defer client.Close()
 	for i:=0; ;i++  {
 		client.Send([]byte(strconv.Itoa(i)))
 		time.Sleep(500 * time.Millisecond)
 	}
+}
+
+func NewSubServer(remoteAddrString string) *SubServer{
+	conn, err := net.ListenPacket("udp", remoteAddrString)
+	if err != nil {
+		panic(err)
+	}
+	return &SubServer{
+		conn,
+	}
+}
+
+type SubServer struct {
+	conn net.PacketConn
 }
 
 type Client struct {
@@ -23,9 +39,10 @@ type Client struct {
 	conn net.Conn
 	recvPackets model.Packets
 	sendPackets model.Packets
+	server SubServer
 }
 
-func NewClient(srcAddressString string, dstAddressString string) *Client {
+func NewClient(srcAddressString string, dstAddressString string, server SubServer) *Client {
 
 	localUdpAddr, err := net.ResolveUDPAddr("udp4", srcAddressString)
 	if err != nil {
@@ -49,6 +66,7 @@ func NewClient(srcAddressString string, dstAddressString string) *Client {
 		conn,
 		*recvPackets,
 		*sendPackets,
+		server,
 	}
 	client.SenderCh = make(chan model.Packet)
 	go client.sendAsync(client.SenderCh)
@@ -61,18 +79,23 @@ func NewClient(srcAddressString string, dstAddressString string) *Client {
 		for {
 			select {
 			case <-t.C:
-				client.resendUnkownStatePackets()
+				//client.resendUnkownStatePackets()
 			}
 		}
 		t.Stop()
 	}()
 
+	go func(){
+		for{
+			fmt.Print("aaa")
+			ret :=make([]byte, model.GetPacketByteLength())
+			server.conn.ReadFrom(ret)
+			client.ReceiverCh <- ret
+		}
+	}()
+
 	return client
 }
-
-func(self *Client)CreateChannel(){
-}
-
 
 func (self *Client)Close(){
 	self.conn.Close()
