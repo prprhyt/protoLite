@@ -5,14 +5,15 @@ import (
 	"github.com/proto-lite/model/frame"
 	"log"
 	"net"
+	"strconv"
 	"time"
 )
 func main() {
 	client := NewClient("192.168.22.1:0", "192.168.22.2:8888")
 	defer client.Close()
-	client.Send([]byte("Hello World from ClientAAAA"))
-	for ; ;  {
-		time.Sleep(1)
+	for i:=0; ;i++  {
+		client.Send([]byte(strconv.Itoa(i)))
+		time.Sleep(500 * time.Millisecond)
 	}
 }
 

@@ -5,6 +5,8 @@ import (
 	"github.com/proto-lite/model"
 	"github.com/proto-lite/model/frame"
 	"net"
+	"sort"
+	"time"
 )
 func main() {
 	server := NewServer(":8888")
@@ -42,15 +44,42 @@ func NewServer(remoteAddrString string) *Server {
 	go server.sendAsync(server.SenderCh)
 	go server.recvPacket(server.ReceiverCh)
 	go server.reSendAckPacket(server.ackPacketCh)
-	//go server.recv()
+
+	go func() {
+		t := time.NewTicker(500 * time.Millisecond)
+		for {
+			select {
+			case <-t.C:
+				server.PrintlnReceivePackets()
+			}
+		}
+		t.Stop()
+	}()
+
 	return server
+}
+
+func (self *Server)PrintlnReceivePackets(){
+	recvPacketOffsets := []uint32{}
+	for k,_ := range self.recvPackets.RecvData{
+		recvPacketOffsets = append(recvPacketOffsets, k)
+	}
+	sort.Slice(recvPacketOffsets, func(i, j int) bool {
+		return recvPacketOffsets[i] < recvPacketOffsets[j]
+	})
+	if len(recvPacketOffsets)==0{
+		return
+	}
+	for _,e := range recvPacketOffsets{
+		fmt.Print(string(self.recvPackets.RecvData[e])+" ")
+	}
+	fmt.Print("\n")
 }
 
 func (self *Server)recv() {
 	for{
 		ret :=make([]byte, model.GetPacketByteLength())
 		_, remoteAddress, _ :=self.conn.ReadFrom(ret)
-		fmt.Print("recv")
 		packet := model.NewPacketFromReceiveByte(ret, remoteAddress, self.conn.LocalAddr())
 		self.ReceiverCh <- *packet
 	}
@@ -71,7 +100,6 @@ func (self *Server)recvPacket(ch <- chan model.Packet) {
 		if(model.DataFrameType.GetByte() == i.FrameType){
 			dataFrame := frame.NewDATAFromReceiveBinary(i.FrameData)
 			self.recvPackets.RecvData[i.Offset] = dataFrame.Data
-			//fmt.Print(string(dataFrame.Data))
 
 		}else if(model.AckFrameType.GetByte() == i.FrameType){
 			ackFrame := frame.NewAckFromBinary(i.FrameData)
