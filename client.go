@@ -57,7 +57,7 @@ func NewClient(srcAddressString string, dstAddressString string) *Client {
 	go client.recv()
 
 	go func() {
-		t := time.NewTicker(500 * time.Millisecond)
+		t := time.NewTicker(1000 * time.Millisecond)
 		for {
 			select {
 			case <-t.C:
@@ -104,7 +104,7 @@ func (self *Client)recvPacket(ch <- chan []byte) {
 
 func (self *Client)resendUnkownStatePackets(){
 	packetID := []uint32{}
-	for _,i := range self.recvPackets.GetSentButUnknownStatePacketIDs(){
+	for _,i := range self.sendPackets.GetSentButUnknownStatePacketIDs(){
 		packet := self.sendPackets.AddResendPacket(self.sendPackets.Packets[i])
 		self.SenderCh <- packet
 		packetID = append(packetID, packet.Id)

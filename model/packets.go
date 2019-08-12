@@ -91,7 +91,7 @@ func(self *Packets) AddResendPacket(packet Packet)(Packet){
 		if(!exist){
 			break
 		}
-		id := self.packetIDAlias[id]
+		id = self.packetIDAlias[id]
 		alias = append(alias, id)
 	}
 	packet.AliasIDs = alias

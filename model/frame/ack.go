@@ -54,7 +54,7 @@ func NewAck(acceptPacketIDs []uint32) *Ack {
 	ACKRanges := []ACKRangeUnit{}
 	LargestAcknowledged := acceptPacketIDs[len(acceptPacketIDs)-1]
 	var prev uint32 = acceptPacketIDs[0]
-	for _,i := range acceptPacketIDs[0:]{
+	for _,i := range acceptPacketIDs[1:]{
 		if(prev+1==i){
 			prev+=1
 		}else{
