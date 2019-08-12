@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/proto-lite/model"
 	"github.com/proto-lite/model/frame"
 	"log"
@@ -12,6 +11,14 @@ import (
 func main() {
 	server := NewSubServer(":8889")
 	client := NewClient("192.168.22.1:0", "192.168.22.2:8888", *server)
+	go func(){
+		for{
+			ret :=make([]byte, model.GetPacketByteLength())
+			server.conn.ReadFrom(ret)
+			client.RecvPacketWithoutChannel(ret)
+			//client.ReceiverCh <- ret
+		}
+	}()
 	defer client.Close()
 	for i:=0; ;i++  {
 		client.Send([]byte(strconv.Itoa(i)))
@@ -20,7 +27,7 @@ func main() {
 }
 
 func NewSubServer(remoteAddrString string) *SubServer{
-	conn, err := net.ListenPacket("udp", remoteAddrString)
+	conn, err := net.ListenPacket("udp4", remoteAddrString)
 	if err != nil {
 		panic(err)
 	}
@@ -71,8 +78,8 @@ func NewClient(srcAddressString string, dstAddressString string, server SubServe
 	client.SenderCh = make(chan model.Packet)
 	go client.sendAsync(client.SenderCh)
 	client.ReceiverCh = make(chan []byte)
-	go client.recvPacket(client.ReceiverCh)
-	go client.recv()
+	go client.RecvPacket(client.ReceiverCh)
+	//go client.recv()
 
 	go func() {
 		t := time.NewTicker(1000 * time.Millisecond)
@@ -85,14 +92,14 @@ func NewClient(srcAddressString string, dstAddressString string, server SubServe
 		t.Stop()
 	}()
 
-	go func(){
+	/*go func(){
 		for{
 			fmt.Print("aaa")
 			ret :=make([]byte, model.GetPacketByteLength())
 			server.conn.ReadFrom(ret)
 			client.ReceiverCh <- ret
 		}
-	}()
+	}()*/
 
 	return client
 }
@@ -109,7 +116,20 @@ func (self *Client)recv() {
 	}
 }
 
-func (self *Client)recvPacket(ch <- chan []byte) {
+func (self *Client)RecvPacketWithoutChannel(i[]byte) {
+	packet := model.NewPacketFromReceiveByte(i, self.conn.LocalAddr(), self.conn.RemoteAddr())
+	if(model.DataFrameType.GetByte() == model.GetFrameTypeFromRawData(i)){
+
+	}else if(model.AckFrameType.GetByte() == model.GetFrameTypeFromRawData(i)){
+		ackFrame := frame.NewAckFromBinary(packet.FrameData)
+		lossPackets, acPackets := ackFrame.GetLossAndAcceptedPacketIDs()
+		self.recvPackets.AddLossPacketIDs(lossPackets)
+		self.recvPackets.AddAcceptPacketIDs(acPackets)
+		self.resendLossPackets()
+	}
+}
+
+func (self *Client)RecvPacket(ch <- chan []byte) {
 	for{
 		i := <- ch
 		packet := self.recvPackets.AddPacketFromReceiveByte(i, self.conn.LocalAddr(), self.conn.RemoteAddr())

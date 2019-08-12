@@ -39,10 +39,11 @@ func(self *Packets) AddPacketFromReceivePacket(packet Packet)(Packet){
 	self.AddPacket(packet)
 	self.AddAcceptPacketIDs([]uint32{packet.Id})
 	self.AddAcceptPacketIDs(packet.AliasIDs)
-	if self.latestId+1 == packet.Id{
+	if self.latestId == packet.Id{
 		self.latestId++
 		return packet
 	}
+	self.latestId = packet.Id + 1
 
 	acPackets := []uint32{}
 	for i, j := range self.acceptPacketID {
