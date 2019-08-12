@@ -14,6 +14,7 @@ type Packets struct {
 	sentButUnknownStatePacketID map[uint32]bool
 	acceptPacketID map[uint32]bool
 	SenderAckCh chan frame.AckAddr
+	packetIDAlias map[uint32]uint32
 }
 
 func NewPackets(SenderAckCh chan frame.AckAddr)(*Packets){
@@ -23,6 +24,7 @@ func NewPackets(SenderAckCh chan frame.AckAddr)(*Packets){
 	packets.lossPacketID = make(map[uint32]bool)
 	packets.sentButUnknownStatePacketID = make(map[uint32]bool)
 	packets.acceptPacketID = make(map[uint32]bool)
+	packets.packetIDAlias = make(map[uint32]uint32)
 	packets.SenderAckCh = SenderAckCh
 	return packets
 }
@@ -34,7 +36,9 @@ func(self *Packets) AddPacket(packet Packet){
 func(self *Packets) AddPacketFromReceivePacket(packet Packet)(Packet){
 	self.AddPacket(packet)
 	self.AddAcceptPacketIDs([]uint32{packet.Id})
+	self.AddAcceptPacketIDs(packet.AliasIDs)
 	if self.latestId+1 == packet.Id{
+		self.latestId++
 		return packet
 	}
 
@@ -60,7 +64,7 @@ func(self *Packets) AddPacketFromReceiveByte(rawSrc []byte, srcAddr net.Addr, ds
 }
 
 func(self *Packets) AddNewDataPacket(rawSrc []byte)(Packet){
-	packet := NewDataPacketFromPayload(self.latestId, self.latestOffset, rawSrc)
+	packet := NewDataPacketFromPayload(self.latestId, self.latestOffset, rawSrc, []uint32{})
 	self.AddPacket(*packet)
 	self.latestId++
 	self.latestOffset++
@@ -68,7 +72,7 @@ func(self *Packets) AddNewDataPacket(rawSrc []byte)(Packet){
 }
 
 func(self *Packets) AddNewAckPacket(srcAddr net.Addr ,rawSrc []byte)(Packet){
-	packet := NewAckPacketFromPayload(srcAddr, self.latestId, self.latestOffset, rawSrc)
+	packet := NewAckPacketFromPayload(srcAddr, self.latestId, self.latestOffset, rawSrc, []uint32{})
 	self.AddPacket(*packet)
 	self.latestId++
 	self.latestOffset++
@@ -76,7 +80,19 @@ func(self *Packets) AddNewAckPacket(srcAddr net.Addr ,rawSrc []byte)(Packet){
 }
 
 func(self *Packets) AddResendPacket(packet Packet)(Packet){
+	alias := []uint32{}
+	self.packetIDAlias[self.latestId] = packet.Id
 	packet.Id = self.latestId
+	id := self.latestId
+	for;;{
+		_, exist := self.packetIDAlias[id]
+		if(!exist){
+			break
+		}
+		id := self.packetIDAlias[id]
+		alias = append(alias, id)
+	}
+	packet.AliasIDs = alias
 	self.AddPacket(packet)
 	self.latestId++
 	return packet
