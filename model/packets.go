@@ -132,14 +132,22 @@ func(self *Packets) GetSentButUnknownStatePacketIDs()([]uint32){
 
 func(self *Packets) AddAcceptPacketIDs(ids []uint32){
 	for _,i := range ids{
-		self.acceptPacketID[i] = true
-		_, exist := self.lossPacketID[i]
-		if(exist){
-			delete(self.lossPacketID,i)
-		}
-		_, exist = self.sentButUnknownStatePacketID[i]
-		if(exist){
-			delete(self.sentButUnknownStatePacketID,i)
+
+		id := i
+		for ;;{
+			self.acceptPacketID[id] = true
+			_, exist := self.lossPacketID[id]
+			if(exist){
+				delete(self.lossPacketID,id)
+			}
+			_, exist = self.sentButUnknownStatePacketID[id]
+			if(exist){
+				delete(self.sentButUnknownStatePacketID,id)
+			}
+			_,exist = self.packetIDAlias[id]
+			if(!exist){
+				break
+			}
 		}
 	}
 }

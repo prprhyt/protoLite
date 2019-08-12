@@ -82,24 +82,16 @@ func NewClient(srcAddressString string, dstAddressString string, server SubServe
 	//go client.recv()
 
 	go func() {
-		t := time.NewTicker(1000 * time.Millisecond)
+		t := time.NewTicker(2000 * time.Millisecond)
 		for {
 			select {
 			case <-t.C:
+				//TODO: Resend timer
 				//client.resendUnkownStatePackets()
 			}
 		}
 		t.Stop()
 	}()
-
-	/*go func(){
-		for{
-			fmt.Print("aaa")
-			ret :=make([]byte, model.GetPacketByteLength())
-			server.conn.ReadFrom(ret)
-			client.ReceiverCh <- ret
-		}
-	}()*/
 
 	return client
 }
