@@ -15,6 +15,7 @@ type Packets struct {
 	acceptPacketID map[uint32]bool
 	SenderAckCh chan frame.AckAddr
 	packetIDAlias map[uint32]uint32
+	RecvData map[uint32][]byte
 }
 
 func NewPackets(SenderAckCh chan frame.AckAddr)(*Packets){
@@ -25,6 +26,7 @@ func NewPackets(SenderAckCh chan frame.AckAddr)(*Packets){
 	packets.sentButUnknownStatePacketID = make(map[uint32]bool)
 	packets.acceptPacketID = make(map[uint32]bool)
 	packets.packetIDAlias = make(map[uint32]uint32)
+	packets.RecvData = make( map[uint32][]byte)
 	packets.SenderAckCh = SenderAckCh
 	return packets
 }

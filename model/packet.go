@@ -28,7 +28,7 @@ type Packet struct {
 }
 
 func GetPacketByteLength()(int){
-	return 30009
+	return 60009
 }
 
 func NewPacketFromReceiveByte(rawSrc []byte, srcAddr net.Addr, dstAddr net.Addr) *Packet {

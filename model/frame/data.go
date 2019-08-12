@@ -15,10 +15,10 @@ type DATA struct {
 }
 
 func NewDATAFromReceiveBinary(rawSrc []byte) *DATA {
-	len := binary.LittleEndian.Uint32(rawSrc[:4])
-	data := rawSrc[4:len]
+	length := binary.LittleEndian.Uint32(rawSrc[:4])
+	data := rawSrc[4:4+length]
 	return &DATA{
-		len,
+		length,
 		data,
 	}
 }

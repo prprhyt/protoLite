@@ -70,7 +70,8 @@ func (self *Server)recvPacket(ch <- chan model.Packet) {
 		self.recvPackets.AddPacketFromReceivePacket(i)
 		if(model.DataFrameType.GetByte() == i.FrameType){
 			dataFrame := frame.NewDATAFromReceiveBinary(i.FrameData)
-			
+			self.recvPackets.RecvData[i.Offset] = dataFrame.Data
+			//fmt.Print(string(dataFrame.Data))
 
 		}else if(model.AckFrameType.GetByte() == i.FrameType){
 			ackFrame := frame.NewAckFromBinary(i.FrameData)
