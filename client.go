@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/proto-lite/model"
 	"github.com/proto-lite/model/frame"
 	"log"
@@ -20,10 +21,28 @@ func main() {
 		}
 	}()
 	defer client.Close()
-	for i:=0; ;i++  {
+	a:=model.GetDataArrayFileFromFilePath("100KB.txt",0x00)
+	fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
+	client.Send(a[0])
+	time.Sleep(20 * time.Millisecond)
+	for _,e := range a[1:]{
+		client.Send(e)
+		time.Sleep(5 * time.Millisecond)
+	}
+	for;;{
+		//go func(){
+			fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
+			for _,e := range a{
+				client.Send(e)
+				time.Sleep(5 * time.Millisecond)
+			}
+			//time.Sleep(20 * time.Millisecond)
+		//}()
+	}
+	/*for i:=0; ;i++  {
 		client.Send([]byte(strconv.Itoa(i)))
 		time.Sleep(500 * time.Millisecond)
-	}
+	}*/
 }
 
 func NewSubServer(remoteAddrString string) *SubServer{

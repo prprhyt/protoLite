@@ -1,3 +1,5 @@
 .idea/
 vendor/
 .DS_Store
+data_for_bench/*
+!data_for_bench/.gitkeep

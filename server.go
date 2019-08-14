@@ -6,7 +6,7 @@ import (
 	"github.com/proto-lite/model/frame"
 	"log"
 	"net"
-	"sort"
+	"strconv"
 	"time"
 )
 func main() {
@@ -46,6 +46,7 @@ type Server struct {
 	recvPackets model.Packets
 	sendPackets model.Packets
 	Client SubClient
+	FileSubFrames []model.FileFrame
 }
 
 func NewServer(remoteAddrString string, client SubClient) *Server {
@@ -54,6 +55,7 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 	ackPacketChDummy := make(chan frame.AckAddr)
 	recvPackets := model.NewPackets(ackPacketCh)
 	sendPackets := model.NewPackets(ackPacketChDummy)
+	fileSubFrames := []model.FileFrame{}
 	if err != nil {
 		panic(err)
 	}
@@ -65,6 +67,7 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 		*recvPackets,
 		*sendPackets,
 		client,
+		fileSubFrames,
 	}
 	go server.sendAsync(server.SenderCh)
 	go server.recvPacket(server.ReceiverCh)
@@ -85,7 +88,7 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 }
 
 func (self *Server)PrintlnReceivePackets(){
-	recvPacketOffsets := []uint32{}
+	/*recvPacketOffsets := []uint32{}
 	for k,_ := range self.recvPackets.RecvData{
 		recvPacketOffsets = append(recvPacketOffsets, k)
 	}
@@ -94,10 +97,15 @@ func (self *Server)PrintlnReceivePackets(){
 	})
 	if len(recvPacketOffsets)==0{
 		return
+	}*/
+	/*for _,e := range recvPacketOffsets{
+		fmt.Print(strconv.Itoa(self.recvPackets.RecvData[e])+" ")
+	}*/
+
+	if len(self.recvPackets.RecvData)==0{
+		return
 	}
-	for _,e := range recvPacketOffsets{
-		fmt.Print(string(self.recvPackets.RecvData[e])+" ")
-	}
+	fmt.Print("ReceivePackets: "+strconv.Itoa(len(self.recvPackets.RecvData)))
 	fmt.Print("\n")
 }
 
