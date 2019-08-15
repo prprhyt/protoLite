@@ -21,7 +21,7 @@ func main() {
 		}
 	}()
 	defer client.Close()
-	a:=model.GetDataArrayFileFromFilePath("100KB.txt",0x00)
+	a:=model.GetDataArrayFileFromFilePath("data_for_bench/100KB.txt",0x00)
 	fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
 	client.Send(a[0])
 	time.Sleep(20 * time.Millisecond)

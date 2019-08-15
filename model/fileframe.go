@@ -14,7 +14,6 @@ In DataFrame:
 const MAX_FILE_SUB_FRAME_DATA_LENGTH = 1000
 
 type FileFrame struct {
-	FileName string
 	Id byte
 	Data map[uint32][]byte // key: offset, value: data
 }
@@ -45,18 +44,18 @@ func GetDataArrayFileFromFilePath(filePath string, id byte)([][]byte){
 type FileSubFrameType int
 
 const (
-	FileNameFrameType FileSubFrameType = iota
-	FileDataFrameType
+	FileDataFrameType FileSubFrameType = iota
 	FileFinFrameType
+	FileDataWithFinFrameType
 )
 
 func (e FileSubFrameType) GetByte() byte{
 	switch e {
-	case FileNameFrameType:
-		return 0x00
 	case FileDataFrameType:
-		return 0x01
+		return 0x00
 	case FileFinFrameType:
+		return 0x01
+	case FileDataWithFinFrameType:
 		return 0x02
 	default:
 		return 0xff

@@ -47,6 +47,7 @@ type Server struct {
 	sendPackets model.Packets
 	Client SubClient
 	FileSubFrames []model.FileFrame
+	FileCollector model.FileCollector
 }
 
 func NewServer(remoteAddrString string, client SubClient) *Server {
@@ -56,6 +57,7 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 	recvPackets := model.NewPackets(ackPacketCh)
 	sendPackets := model.NewPackets(ackPacketChDummy)
 	fileSubFrames := []model.FileFrame{}
+	filecollector := model.NewFileCollector()
 	if err != nil {
 		panic(err)
 	}
@@ -68,6 +70,7 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 		*sendPackets,
 		client,
 		fileSubFrames,
+		*filecollector,
 	}
 	go server.sendAsync(server.SenderCh)
 	go server.recvPacket(server.ReceiverCh)
@@ -132,7 +135,27 @@ func (self *Server)recvPacket(ch <- chan model.Packet) {
 		self.recvPackets.AddPacketFromReceivePacket(i)
 		if(model.DataFrameType.GetByte() == i.FrameType){
 			dataFrame := frame.NewDATAFromReceiveBinary(i.FrameData)
-			self.recvPackets.RecvData[i.Offset] = dataFrame.Data
+			//self.recvPackets.RecvData[i.Offset] = dataFrame.Data
+			if(model.FileFinFrameType.GetByte() == dataFrame.Data[1]){
+				self.FileCollector.SetData(dataFrame.Data[0], i.Offset, dataFrame.Data[2:])
+				if(self.FileCollector.GetFinishFlag(dataFrame.Data[0])){
+					if(self.FileCollector.IsFilePacketComplete(dataFrame.Data[0])){
+						self.FileCollector.MakeFile(dataFrame.Data[0])
+					}
+				}
+			}
+			if(model.FileFinFrameType.GetByte() == dataFrame.Data[1]){
+				if(self.FileCollector.IsFilePacketComplete(dataFrame.Data[0])){
+					self.FileCollector.MakeFile(dataFrame.Data[0])
+				}
+			}
+			if(model.FileDataWithFinFrameType.GetByte() == dataFrame.Data[1]){
+				self.FileCollector.SetData(dataFrame.Data[0], i.Offset, dataFrame.Data[2:])
+				if(self.FileCollector.IsFilePacketComplete(dataFrame.Data[0])){
+					self.FileCollector.MakeFile(dataFrame.Data[0])
+				}
+			}
+
 
 		}else if(model.AckFrameType.GetByte() == i.FrameType){
 			ackFrame := frame.NewAckFromBinary(i.FrameData)
