@@ -29,13 +29,16 @@ func main() {
 		client.Send(e)
 		time.Sleep(5 * time.Millisecond)
 	}
+	var i byte = 0x00
 	for;;{
 		//go func(){
 			fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
 			for _,e := range a{
+				e[0] = i
 				client.Send(e)
 				time.Sleep(5 * time.Millisecond)
 			}
+			i+=0x01
 			//time.Sleep(20 * time.Millisecond)
 		//}()
 	}

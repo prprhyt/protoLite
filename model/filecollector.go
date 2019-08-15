@@ -39,7 +39,7 @@ func(self *FileCollector)SetStartOffset(id byte, offset uint32){
 	if(exist){
 		return
 	}
-	self.StartEndOffset[id][0] = offset
+	self.StartEndOffset[id] = []uint32{offset,0}
 }
 
 func(self *FileCollector)SetEndOffset(id byte, offset uint32){
@@ -52,6 +52,10 @@ func(self *FileCollector)SetEndOffset(id byte, offset uint32){
 
 func(self *FileCollector)SetData(id byte,offset uint32, data []byte){
 	self.SetStartOffset(id, offset)
+	_, exist := self.Data[id]
+	if(!exist){
+		self.Data[id] = make(map[uint32][]byte)
+	}
 	self.Data[id][offset] = data
 }
 
@@ -72,7 +76,7 @@ func(self *FileCollector) MakeFile(id byte){
 		data = append(data, self.Data[id][i]...)
 	}
 	var fid uint32 = 0
-	binary.LittleEndian.PutUint32([]byte{id,0,0,0}, fid)
+	binary.LittleEndian.PutUint32([]byte{0,0,0,id}, fid)
 	for ;; {
 		_, exist := self.FileList[fid]
 		if(!exist){

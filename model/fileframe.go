@@ -26,6 +26,7 @@ func GetDataArrayFileFromFilePath(filePath string, id byte)([][]byte){
 	}
 	defer f.Close()
 	buf := make([]byte, MAX_FILE_SUB_FRAME_DATA_LENGTH)
+	i := 0
 	for {
 		// nはバイト数を示す
 		n, err := f.Read(buf)
@@ -36,8 +37,11 @@ func GetDataArrayFileFromFilePath(filePath string, id byte)([][]byte){
 		if err != nil{
 			break
 		}
-		data = append(data, buf[:n])
+		data = append(data, []byte{id,0x00})
+		data[i] = append(data[i], buf[:n]...)
+		i++
 	}
+	data[len(data)-1][1] = 0x02 //FileDataWithFinFrameType
 	return data
 }
 
