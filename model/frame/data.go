@@ -3,7 +3,7 @@ package frame
 import "encoding/binary"
 
 /*
-proto-lite DATA Frame
+protoLite DATA Frame
 In FrameData:
 |len|data|
 

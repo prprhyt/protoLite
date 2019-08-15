@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/proto-lite/model"
-	"github.com/proto-lite/model/frame"
+	"github.com/protoLite/model"
+	"github.com/protoLite/model/frame"
 	"log"
 	"net"
 	"strconv"

@@ -2,7 +2,7 @@ package model
 
 import (
 	"encoding/binary"
-	"github.com/proto-lite/model/frame"
+	"github.com/protoLite/model/frame"
 	"net"
 )
 

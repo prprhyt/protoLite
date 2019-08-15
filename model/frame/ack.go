@@ -6,7 +6,7 @@ import (
 )
 
 /*
-proto-lite ACK Frame
+protoLite ACK Frame
 In FrameData:
 |LargestAcknowledged(4byte)|ACKRangeCount(4byte)|ACKRanges|
 

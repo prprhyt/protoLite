@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/proto-lite/model/frame"
+	"github.com/protoLite/model/frame"
 	"net"
 	"sort"
 )
