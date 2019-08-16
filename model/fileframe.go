@@ -11,7 +11,7 @@ In DataFrame:
 */
 
 
-const MAX_FILE_SUB_FRAME_DATA_LENGTH = 1000
+const MAX_FILE_SUB_FRAME_DATA_LENGTH = 2500
 
 type FileFrame struct {
 	Id byte

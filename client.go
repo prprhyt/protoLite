@@ -32,6 +32,9 @@ func main() {
 	var j int = 0
 	for;;{
 		//go func(){
+		if 1000<(int(i)+j){
+			break
+		}
 
 			a:=model.GetDataArrayFileFromFilePath("src/"+strconv.Itoa(int(i)+j)+".bin",i)
 			//fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
@@ -43,11 +46,15 @@ func main() {
 				i=0x01
 				j+=255
 				//prof.Stop()
+				//break
 			}else{
 				i+=0x01
 			}
 			//time.Sleep(20 * time.Millisecond)
 		//}()
+	}
+	for;;{
+		time.Sleep(1*time.Millisecond)
 	}
 	/*for i:=0; ;i++  {
 		client.Send([]byte(strconv.Itoa(i)))
@@ -180,6 +187,9 @@ func (self *Client)resendUnkownStatePackets(){
 func (self *Client)resendLossPackets(){
 	packetID := []uint32{}
 	for _,i := range self.recvPackets.GetLossPacketIDs(){
+		if(uint32(len(self.sendPackets.Packets))<=i){
+			break
+		}
 		packet := self.sendPackets.AddResendPacket(self.sendPackets.Packets[i])
 		self.SenderCh <- packet
 		packetID = append(packetID, packet.Id)
@@ -198,11 +208,25 @@ func (self *Client)send(packet model.Packet){
 }
 
 func (self *Client)sendAsync(ch <-chan model.Packet)  {
+	var waitMs time.Duration = 1
 	for {
 		i := <- ch
 		_, err := self.conn.Write(i.ToBytes())
 		if err != nil {
-			panic(err)
+			//panic(err)
+			waitMs+=5
+		}else {
+			if(1<=waitMs-3){
+				waitMs-=3
+			}else{
+				waitMs = 1
+			}
+		}
+		if(0<waitMs){
+			time.Sleep(waitMs*time.Millisecond)
+			if err != nil {
+				self.SenderCh <- i
+			}
 		}
 	}
 }

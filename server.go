@@ -1,11 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"github.com/protoLite/model"
 	"github.com/protoLite/model/frame"
 	"log"
 	"net"
 	"os"
+	"sort"
+	"strconv"
+	"time"
 )
 func main() {
 	srcAddr := "192.168.22.1"
@@ -80,7 +84,7 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 	go server.recvPacket(server.ReceiverCh)
 	go server.reSendAckPacket(server.ackPacketCh)
 
-	/*go func() {
+	go func() {
 		t := time.NewTicker(500 * time.Millisecond)
 		for {
 			select {
@@ -89,13 +93,13 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 			}
 		}
 		t.Stop()
-	}()*/
+	}()
 
 	return server
 }
 
 func (self *Server)PrintlnReceivePackets(){
-	/*recvPacketOffsets := []uint32{}
+	recvPacketOffsets := []uint32{}
 	for k,_ := range self.recvPackets.RecvData{
 		recvPacketOffsets = append(recvPacketOffsets, k)
 	}
@@ -104,11 +108,12 @@ func (self *Server)PrintlnReceivePackets(){
 	})
 	if len(recvPacketOffsets)==0{
 		return
-	}*/
-	/*for _,e := range recvPacketOffsets{
-		fmt.Print(strconv.Itoa(self.recvPackets.RecvData[e])+" ")
-	}*/
-
+	}
+	for _,e := range recvPacketOffsets{
+		//fmt.Print(strconv.Itoa(self.recvPackets.RecvData[e])+" ")
+		fmt.Print(strconv.Itoa(int(e))+" ")
+	}
+	fmt.Print("\n")
 	if len(self.recvPackets.RecvData)==0{
 		return
 	}
@@ -139,7 +144,9 @@ func (self *Server)recvPacket(ch <- chan model.Packet) {
 		self.recvPackets.AddPacketFromReceivePacket(i)
 		if(model.DataFrameType.GetByte() == i.FrameType){
 			dataFrame := frame.NewDATAFromReceiveBinary(i.FrameData)
-			//self.recvPackets.RecvData[i.Offset] = dataFrame.Data
+			if(i.Offset<50) {
+				self.recvPackets.RecvData[i.Offset] = dataFrame.Data
+			}
 			self.FileCollector.SetData(dataFrame.Data[0], i.Offset, dataFrame.Data[2:])
 			if(model.FileFinFrameType.GetByte() == dataFrame.Data[1]){
 				if(self.FileCollector.GetFinishFlag(dataFrame.Data[0])){
@@ -183,12 +190,25 @@ func (self *Server)send(packet model.Packet){
 }
 
 func (self *Server)sendAsync(ch <-chan model.Packet)  {
+	var waitMs time.Duration = 1
 	for {
 		i := <- ch
-		//_, err := self.conn.WriteTo(i.ToBytes(), i.Src)
 		_, err := self.Client.Conn.Write(i.ToBytes())
 		if err != nil {
-			panic(err)
+			//panic(err)
+			waitMs+=5
+		}else {
+			if(1<=waitMs-3){
+				waitMs-=3
+			}else{
+				waitMs = 1
+			}
+		}
+		if(0<waitMs){
+			time.Sleep(waitMs*time.Millisecond)
+			if err != nil {
+				self.SenderCh <- i
+			}
 		}
 	}
 }

@@ -4,7 +4,12 @@ import (
 	"github.com/protoLite/model/frame"
 	"net"
 	"sort"
+	"sync"
 )
+
+var ClientMutex struct {
+	sync.Mutex
+}
 
 type Packets struct {
 	Packets  []Packet
@@ -108,7 +113,9 @@ func(self *Packets) GetLatestPacket()(Packet){
 
 func(self *Packets) AddSentButUnknownStatePacketIDs(ids []uint32){
 	for _,i := range ids{
+		ClientMutex.Lock()
 		self.sentButUnknownStatePacketID[i] = true
+		ClientMutex.Unlock()
 		_, exist := self.acceptPacketID[i]
 		if(exist){
 			delete(self.sentButUnknownStatePacketID,i)
