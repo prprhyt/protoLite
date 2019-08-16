@@ -7,8 +7,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"sort"
-	"strconv"
 	"time"
 )
 func main() {
@@ -84,7 +82,7 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 	go server.recvPacket(server.ReceiverCh)
 	go server.reSendAckPacket(server.ackPacketCh)
 
-	go func() {
+	/*go func() {
 		t := time.NewTicker(500 * time.Millisecond)
 		for {
 			select {
@@ -93,13 +91,13 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 			}
 		}
 		t.Stop()
-	}()
+	}()*/
 
 	return server
 }
 
 func (self *Server)PrintlnReceivePackets(){
-	recvPacketOffsets := []uint32{}
+	/*recvPacketOffsets := []uint32{}
 	for k,_ := range self.recvPackets.RecvData{
 		recvPacketOffsets = append(recvPacketOffsets, k)
 	}
@@ -113,7 +111,7 @@ func (self *Server)PrintlnReceivePackets(){
 		//fmt.Print(strconv.Itoa(self.recvPackets.RecvData[e])+" ")
 		fmt.Print(strconv.Itoa(int(e))+" ")
 	}
-	fmt.Print("\n")
+	fmt.Print("\n")*/
 	if len(self.recvPackets.RecvData)==0{
 		return
 	}
@@ -144,9 +142,6 @@ func (self *Server)recvPacket(ch <- chan model.Packet) {
 		self.recvPackets.AddPacketFromReceivePacket(i)
 		if(model.DataFrameType.GetByte() == i.FrameType){
 			dataFrame := frame.NewDATAFromReceiveBinary(i.FrameData)
-			if(i.Offset<50) {
-				self.recvPackets.RecvData[i.Offset] = dataFrame.Data
-			}
 			self.FileCollector.SetData(dataFrame.Data[0], i.Offset, dataFrame.Data[2:])
 			if(model.FileFinFrameType.GetByte() == dataFrame.Data[1]){
 				if(self.FileCollector.GetFinishFlag(dataFrame.Data[0])){
