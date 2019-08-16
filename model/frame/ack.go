@@ -86,7 +86,16 @@ func (self *Ack) GetLossAndAcceptedPacketIDs()([]uint32, []uint32) {
 			accepted = append(accepted, j)
 		}
 	}
-	k := self.ACKRanges[len(self.ACKRanges)-1].ACKRange+self.ACKRanges[len(self.ACKRanges)-1].Gap+1
+	var k uint32 = 0
+	if(0<len(self.ACKRanges)){
+		k = self.ACKRanges[len(self.ACKRanges)-1].ACKRange+self.ACKRanges[len(self.ACKRanges)-1].Gap+1
+	}else{
+		k = self.LargestAcknowledged
+		var i uint32 = 0
+		for i=0;i<k;i++{
+			loss = append(loss, i)
+		}
+	}
 
 	for i:=k;i<(self.LargestAcknowledged+1); i++ {
 		accepted = append(accepted, i)

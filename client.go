@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/protoLite/model"
 	"github.com/protoLite/model/frame"
 	"log"
@@ -11,6 +10,7 @@ import (
 	"time"
 )
 func main() {
+	//prof:=profile.Start(profile.ProfilePath("."))
 	srcAddr := "192.168.22.1"
 	dstAddr := "192.168.22.2"
 	if(3==len(os.Args)){
@@ -29,17 +29,20 @@ func main() {
 	}()
 	defer client.Close()
 	var i byte = 0x01
+	var j int = 0
 	for;;{
 		//go func(){
 
-			a:=model.GetDataArrayFileFromFilePath("src/"+strconv.Itoa(int(i))+".bin",i)
-			fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
+			a:=model.GetDataArrayFileFromFilePath("src/"+strconv.Itoa(int(i)+j)+".bin",i)
+			//fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
 			for _,e := range a{
 				client.Send(e)
 				time.Sleep(5 * time.Millisecond)
 			}
 			if 0xff==i{
 				i=0x01
+				j+=255
+				//prof.Stop()
 			}else{
 				i+=0x01
 			}

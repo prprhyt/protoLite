@@ -1,14 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"github.com/protoLite/model"
 	"github.com/protoLite/model/frame"
 	"log"
 	"net"
 	"os"
-	"strconv"
-	"time"
 )
 func main() {
 	srcAddr := "192.168.22.1"
@@ -83,7 +80,7 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 	go server.recvPacket(server.ReceiverCh)
 	go server.reSendAckPacket(server.ackPacketCh)
 
-	go func() {
+	/*go func() {
 		t := time.NewTicker(500 * time.Millisecond)
 		for {
 			select {
@@ -92,7 +89,7 @@ func NewServer(remoteAddrString string, client SubClient) *Server {
 			}
 		}
 		t.Stop()
-	}()
+	}()*/
 
 	return server
 }
@@ -115,8 +112,8 @@ func (self *Server)PrintlnReceivePackets(){
 	if len(self.recvPackets.RecvData)==0{
 		return
 	}
-	fmt.Print("ReceivePackets: "+strconv.Itoa(len(self.recvPackets.RecvData)))
-	fmt.Print("\n")
+	//fmt.Print("ReceivePackets: "+strconv.Itoa(len(self.recvPackets.RecvData)))
+	//fmt.Print("\n")
 }
 
 func (self *Server)recv() {
@@ -152,13 +149,13 @@ func (self *Server)recvPacket(ch <- chan model.Packet) {
 				}
 			}
 			if(model.FileFinFrameType.GetByte() == dataFrame.Data[1]){
-				fmt.Print("receive fin")
+				//fmt.Print("receive fin")
 				if(self.FileCollector.IsFilePacketComplete(dataFrame.Data[0])){
 					self.FileCollector.MakeFile(dataFrame.Data[0])
 				}
 			}
 			if(model.FileDataWithFinFrameType.GetByte() == dataFrame.Data[1]){
-				fmt.Print("receive fin")
+				//fmt.Print("receive fin")
 				self.FileCollector.SetData(dataFrame.Data[0], i.Offset, dataFrame.Data[2:])
 				if(self.FileCollector.IsFilePacketComplete(dataFrame.Data[0])){
 					self.FileCollector.MakeFile(dataFrame.Data[0])
