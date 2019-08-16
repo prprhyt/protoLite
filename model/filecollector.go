@@ -36,6 +36,9 @@ func(self *FileCollector)GetFinishFlag(id uint32)bool{
 func(self *FileCollector)SetStartOffset(id uint32, offset uint32){
 	_, exist := self.StartEndOffset[id]
 	if(exist){
+		if(self.StartEndOffset[id][0]>offset){
+			self.StartEndOffset[id][0] = offset
+		}
 		return
 	}
 	self.StartEndOffset[id] = []uint32{offset,0}

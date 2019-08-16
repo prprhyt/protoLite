@@ -45,6 +45,7 @@ func GetDataArrayFileFromFilePath(filePath string, id uint32)([][]byte){
 		data[i] = append(data[i], buf[:n]...)
 		i++
 	}
+	data = data[:i]
 	data[len(data)-1][4] = 0x02 //FileDataWithFinFrameType
 	return data
 }
