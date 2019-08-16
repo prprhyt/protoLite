@@ -6,12 +6,19 @@ import (
 	"github.com/protoLite/model/frame"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"time"
 )
 func main() {
+	srcAddr := "192.168.22.1"
+	dstAddr := "192.168.22.2"
+	if(3==len(os.Args)){
+		srcAddr = os.Args[1]
+		dstAddr = os.Args[2]
+	}
 	server := NewSubServer(":8889")
-	client := NewClient("192.168.22.1:0", "192.168.22.2:8888", *server)
+	client := NewClient(srcAddr+":0", dstAddr+":8888", *server)
 	go func(){
 		for{
 			ret :=make([]byte, model.GetPacketByteLength())

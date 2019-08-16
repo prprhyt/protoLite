@@ -6,11 +6,18 @@ import (
 	"github.com/protoLite/model/frame"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"time"
 )
 func main() {
-	client := NewSubClient("192.168.22.2:0", "192.168.22.1:8889")
+	srcAddr := "192.168.22.1"
+	dstAddr := "192.168.22.2"
+	if(3==len(os.Args)){
+		srcAddr = os.Args[1]
+		dstAddr = os.Args[2]
+	}
+	client := NewSubClient(dstAddr+":0", srcAddr+":8889")
 	server := NewServer(":8888", *client)
 	for {
 		server.recv()
