@@ -39,10 +39,12 @@ func GetDataArrayFileFromFilePath(filePath string, id uint32)([][]byte){
 		if err != nil{
 			break
 		}
+		data_ := []byte{}
 		binary.LittleEndian.PutUint32(tmp, id)
-		data = append(data, tmp)
-		data = append(data, []byte{0x00})
-		data[i] = append(data[i], buf[:n]...)
+		data_ = append(data_, tmp...)
+		data_ = append(data_, []byte{0x00}...)
+		data_ = append(data_,  buf[:n]...)
+		data = append(data, data_)
 		i++
 	}
 	data = data[:i]
