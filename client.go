@@ -21,24 +21,21 @@ func main() {
 		}
 	}()
 	defer client.Close()
-	a:=model.GetDataArrayFileFromFilePath("data_for_bench/100KB.txt",0x00)
-	fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
-	client.Send(a[0])
-	time.Sleep(20 * time.Millisecond)
-	for _,e := range a[1:]{
-		client.Send(e)
-		time.Sleep(5 * time.Millisecond)
-	}
-	var i byte = 0x00
+	var i byte = 0x01
 	for;;{
 		//go func(){
+
+			a:=model.GetDataArrayFileFromFilePath("src/"+strconv.Itoa(int(i))+".bin",i)
 			fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
 			for _,e := range a{
-				e[0] = i
 				client.Send(e)
 				time.Sleep(5 * time.Millisecond)
 			}
-			i+=0x01
+			if 0xff==i{
+				i=0x01
+			}else{
+				i+=0x01
+			}
 			//time.Sleep(20 * time.Millisecond)
 		//}()
 	}

@@ -84,7 +84,7 @@ func(self *FileCollector) MakeFile(id byte){
 		}
 		fid = fid+256
 	}
-	file, err := os.Create(`receive/`+strconv.FormatUint(uint64(fid), 10))
+	file, err := os.Create(`dst/`+strconv.FormatUint(uint64(fid), 10)+`.bin`)
 	if err != nil {
 		// Openエラー処理
 	}

@@ -135,9 +135,9 @@ func (self *Server)recvPacket(ch <- chan model.Packet) {
 		self.recvPackets.AddPacketFromReceivePacket(i)
 		if(model.DataFrameType.GetByte() == i.FrameType){
 			dataFrame := frame.NewDATAFromReceiveBinary(i.FrameData)
-			self.recvPackets.RecvData[i.Offset] = dataFrame.Data
+			//self.recvPackets.RecvData[i.Offset] = dataFrame.Data
+			self.FileCollector.SetData(dataFrame.Data[0], i.Offset, dataFrame.Data[2:])
 			if(model.FileFinFrameType.GetByte() == dataFrame.Data[1]){
-				self.FileCollector.SetData(dataFrame.Data[0], i.Offset, dataFrame.Data[2:])
 				if(self.FileCollector.GetFinishFlag(dataFrame.Data[0])){
 					if(self.FileCollector.IsFilePacketComplete(dataFrame.Data[0])){
 						self.FileCollector.MakeFile(dataFrame.Data[0])

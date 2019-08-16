@@ -1,3 +1,5 @@
+src/
+dst/
 .idea/
 vendor/
 .DS_Store
