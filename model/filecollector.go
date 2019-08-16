@@ -76,7 +76,7 @@ func(self *FileCollector) MakeFile(id byte){
 		data = append(data, self.Data[id][i]...)
 	}
 	var fid uint32 = 0
-	binary.LittleEndian.PutUint32([]byte{0,0,0,id}, fid)
+	fid = binary.LittleEndian.Uint32([]byte{id,0,0,0})
 	for ;; {
 		_, exist := self.FileList[fid]
 		if(!exist){
