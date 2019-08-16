@@ -78,7 +78,7 @@ func(self *FileCollector)IsFilePacketComplete(id uint32) bool{
 		}
 		length+=uint32(len(self.Data[i]))
 	}
-	return length*8>=self.FileLength[id] //true
+	return true //length*8>=self.FileLength[id] //true
 }
 
 func(self *FileCollector) MakeFile(id uint32){
