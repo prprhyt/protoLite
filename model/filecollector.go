@@ -10,6 +10,7 @@ type FileCollector struct {
 	Data map[uint32]map[uint32][]byte // key: offset, value: data
 	FileList map[uint32]bool
 	FinishFlagReceived map[uint32]bool
+	FileLength map[uint32]uint32
 }
 
 func NewFileCollector() *FileCollector{
@@ -18,6 +19,7 @@ func NewFileCollector() *FileCollector{
 	filecollector.Data = make(map[uint32]map[uint32][]byte)
 	filecollector.FileList = make(map[uint32]bool)
 	filecollector.FinishFlagReceived = make(map[uint32]bool)
+	filecollector.FileLength = make(map[uint32]uint32)
 	return &filecollector
 }
 
@@ -52,6 +54,11 @@ func(self *FileCollector)SetEndOffset(id uint32, offset uint32){
 	self.StartEndOffset[id][1] = offset
 }
 
+
+func(self *FileCollector)SetFileLength(id uint32,length uint32){
+	self.FileLength[id] = length
+}
+
 func(self *FileCollector)SetData(id uint32,offset uint32, data []byte){
 	self.SetStartOffset(id, offset)
 	_, exist := self.Data[id]
@@ -63,13 +70,15 @@ func(self *FileCollector)SetData(id uint32,offset uint32, data []byte){
 
 func(self *FileCollector)IsFilePacketComplete(id uint32) bool{
 	var i uint32 = 0
+	var length uint32 = 0
 	for ;i< uint32(len(self.Data[id]));i++{
 		_, exist := self.Data[id]
 		if(!exist){
 			return false
 		}
+		length+=uint32(len(self.Data[i]))
 	}
-	return true
+	return length>=self.FileLength[id]
 }
 
 func(self *FileCollector) MakeFile(id uint32){

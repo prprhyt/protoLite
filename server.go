@@ -164,6 +164,15 @@ func (self *Server)recvPacket(ch <- chan model.Packet) {
 					self.FileCollector.MakeFile(fid)
 				}
 			}
+			if(model.FileStartWithData.GetByte() == dataFrame.Data[4]){
+				self.FileCollector.SetData(fid,i.Offset, dataFrame.Data[5:len(dataFrame.Data)-4])
+
+				l:= binary.LittleEndian.Uint32(dataFrame.Data[len(dataFrame.Data)-4:])
+				self.FileCollector.SetFileLength(fid,l)
+				if(self.FileCollector.IsFilePacketComplete(fid)){
+					self.FileCollector.MakeFile(fid)
+				}
+			}
 
 
 		}else if(model.AckFrameType.GetByte() == i.FrameType){

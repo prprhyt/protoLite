@@ -49,6 +49,10 @@ func GetDataArrayFileFromFilePath(filePath string, id uint32)([][]byte){
 	}
 	data = data[:i]
 	data[len(data)-1][4] = 0x02 //FileDataWithFinFrameType
+	fileinfo, _ := f.Stat()
+	binary.LittleEndian.PutUint32(tmp, uint32(fileinfo.Size()))
+	data[0] = append(data[0],tmp...)
+	data[0][4] = 0x03
 	return data
 }
 
@@ -58,6 +62,7 @@ const (
 	FileDataFrameType FileSubFrameType = iota
 	FileFinFrameType
 	FileDataWithFinFrameType
+	FileStartWithData
 )
 
 func (e FileSubFrameType) GetByte() byte{
@@ -68,6 +73,8 @@ func (e FileSubFrameType) GetByte() byte{
 		return 0x01
 	case FileDataWithFinFrameType:
 		return 0x02
+	case FileStartWithData:
+		return 0x03
 	default:
 		return 0xff
 	}
