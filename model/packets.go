@@ -89,9 +89,9 @@ func(self *Packets) AddNewAckPacket(srcAddr net.Addr ,rawSrc []byte)(Packet){
 
 func(self *Packets) AddResendPacket(packet Packet)(Packet){
 	alias := []uint32{}
-	self.packetIDAlias[self.latestId] = packet.Id
+	//self.packetIDAlias[self.latestId] = packet.Id
 	packet.Id = self.latestId
-	id := self.latestId
+	/*id := self.latestId
 	for;;{
 		_, exist := self.packetIDAlias[id]
 		if(!exist){
@@ -99,7 +99,7 @@ func(self *Packets) AddResendPacket(packet Packet)(Packet){
 		}
 		id = self.packetIDAlias[id]
 		alias = append(alias, id)
-	}
+	}*/
 	packet.AliasIDs = alias
 	self.AddPacket(packet)
 	self.latestId++

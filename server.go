@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/protoLite/model"
 	"github.com/protoLite/model/frame"
 	"log"
