@@ -50,7 +50,8 @@ func GetDataArrayFileFromFilePath(filePath string, id uint32)([][]byte){
 	data = data[:i]
 	data[len(data)-1][4] = 0x02 //FileDataWithFinFrameType
 	fileinfo, _ := f.Stat()
-	binary.LittleEndian.PutUint32(tmp, uint32(fileinfo.Size()))
+	b:=fileinfo.Size()
+	binary.LittleEndian.PutUint32(tmp, uint32(b))
 	data[0] = append(data[0],tmp...)
 	data[0][4] = 0x03
 	return data
