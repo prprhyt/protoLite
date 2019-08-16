@@ -1,24 +1,25 @@
 package model
 
 import (
+	"encoding/binary"
 	"fmt"
 	"os"
 )
 
 /*
 In DataFrame:
-|id(1byte)|FileSubFrameType(1byte)|data|
+|id(4byte)|FileSubFrameType(1byte)|data|
 */
 
 
 const MAX_FILE_SUB_FRAME_DATA_LENGTH = 2500
 
 type FileFrame struct {
-	Id byte
+	Id uint32
 	Data map[uint32][]byte // key: offset, value: data
 }
 
-func GetDataArrayFileFromFilePath(filePath string, id byte)([][]byte){
+func GetDataArrayFileFromFilePath(filePath string, id uint32)([][]byte){
 	data := [][]byte{}
 	f, err := os.Open(filePath)
 	if err != nil{
@@ -27,6 +28,7 @@ func GetDataArrayFileFromFilePath(filePath string, id byte)([][]byte){
 	defer f.Close()
 	buf := make([]byte, MAX_FILE_SUB_FRAME_DATA_LENGTH)
 	i := 0
+	tmp := []byte{0x00,0x00,0x00,0x00}
 	for {
 		// nはバイト数を示す
 		n, err := f.Read(buf)
@@ -37,11 +39,13 @@ func GetDataArrayFileFromFilePath(filePath string, id byte)([][]byte){
 		if err != nil{
 			break
 		}
-		data = append(data, []byte{id,0x00})
+		binary.LittleEndian.PutUint32(tmp, id)
+		data = append(data, tmp)
+		data = append(data, []byte{0x00})
 		data[i] = append(data[i], buf[:n]...)
 		i++
 	}
-	data[len(data)-1][1] = 0x02 //FileDataWithFinFrameType
+	data[len(data)-1][4] = 0x02 //FileDataWithFinFrameType
 	return data
 }
 

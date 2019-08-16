@@ -1,32 +1,31 @@
 package model
 
 import (
-	"encoding/binary"
 	"os"
 	"strconv"
 )
 
 type FileCollector struct {
-	StartEndOffset map[byte][]uint32 // key: file_id, value: [start_offset, end_offset]
-	Data map[byte]map[uint32][]byte // key: offset, value: data
+	StartEndOffset map[uint32][]uint32 // key: file_id, value: [start_offset, end_offset]
+	Data map[uint32]map[uint32][]byte // key: offset, value: data
 	FileList map[uint32]bool
-	FinishFlagReceived map[byte]bool
+	FinishFlagReceived map[uint32]bool
 }
 
 func NewFileCollector() *FileCollector{
 	filecollector := FileCollector{}
-	filecollector.StartEndOffset = make(map[byte][]uint32)
-	filecollector.Data = make(map[byte]map[uint32][]byte)
+	filecollector.StartEndOffset = make(map[uint32][]uint32)
+	filecollector.Data = make(map[uint32]map[uint32][]byte)
 	filecollector.FileList = make(map[uint32]bool)
-	filecollector.FinishFlagReceived = make(map[byte]bool)
+	filecollector.FinishFlagReceived = make(map[uint32]bool)
 	return &filecollector
 }
 
-func(self *FileCollector)SetFinishFlag(id byte){
+func(self *FileCollector)SetFinishFlag(id uint32){
 	self.FinishFlagReceived[id] = true
 }
 
-func(self *FileCollector)GetFinishFlag(id byte)bool{
+func(self *FileCollector)GetFinishFlag(id uint32)bool{
 	_, exist := self.FinishFlagReceived[id]
 	if(!exist){
 		return false
@@ -34,7 +33,7 @@ func(self *FileCollector)GetFinishFlag(id byte)bool{
 	return self.FinishFlagReceived[id]
 }
 
-func(self *FileCollector)SetStartOffset(id byte, offset uint32){
+func(self *FileCollector)SetStartOffset(id uint32, offset uint32){
 	_, exist := self.StartEndOffset[id]
 	if(exist){
 		return
@@ -42,7 +41,7 @@ func(self *FileCollector)SetStartOffset(id byte, offset uint32){
 	self.StartEndOffset[id] = []uint32{offset,0}
 }
 
-func(self *FileCollector)SetEndOffset(id byte, offset uint32){
+func(self *FileCollector)SetEndOffset(id uint32, offset uint32){
 	_, exist := self.StartEndOffset[id]
 	if(!exist){
 		return
@@ -50,7 +49,7 @@ func(self *FileCollector)SetEndOffset(id byte, offset uint32){
 	self.StartEndOffset[id][1] = offset
 }
 
-func(self *FileCollector)SetData(id byte,offset uint32, data []byte){
+func(self *FileCollector)SetData(id uint32,offset uint32, data []byte){
 	self.SetStartOffset(id, offset)
 	_, exist := self.Data[id]
 	if(!exist){
@@ -59,7 +58,7 @@ func(self *FileCollector)SetData(id byte,offset uint32, data []byte){
 	self.Data[id][offset] = data
 }
 
-func(self *FileCollector)IsFilePacketComplete(id byte) bool{
+func(self *FileCollector)IsFilePacketComplete(id uint32) bool{
 	var i uint32 = 0
 	for ;i< uint32(len(self.Data[id]));i++{
 		_, exist := self.Data[id]
@@ -70,27 +69,18 @@ func(self *FileCollector)IsFilePacketComplete(id byte) bool{
 	return true
 }
 
-func(self *FileCollector) MakeFile(id byte){
+func(self *FileCollector) MakeFile(id uint32){
 	data := []byte{}
 	for i := self.StartEndOffset[id][0];i<uint32(len(self.Data[id]))+self.StartEndOffset[id][0];i++{
 		data = append(data, self.Data[id][i]...)
 	}
-	var fid uint32 = 0
-	fid = binary.LittleEndian.Uint32([]byte{id,0,0,0})
-	for ;; {
-		_, exist := self.FileList[fid]
-		if(!exist){
-			break
-		}
-		fid = fid+256
-	}
-	file, err := os.Create(`dst/`+strconv.FormatUint(uint64(fid), 10)+`.bin`)
+	file, err := os.Create(`dst/`+strconv.FormatUint(uint64(id), 10)+`.bin`)
 	if err != nil {
 		// Openエラー処理
 	}
 	defer file.Close()
 	file.Write(([]byte)(data))
-	self.FileList[fid] = true
+	self.FileList[id] = true
 	delete(self.Data,id)
 	delete(self.StartEndOffset,id)
 	delete(self.FinishFlagReceived,id)

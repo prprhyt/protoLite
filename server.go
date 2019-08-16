@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"github.com/protoLite/model"
 	"github.com/protoLite/model/frame"
 	"log"
@@ -141,25 +142,26 @@ func (self *Server)recvPacket(ch <- chan model.Packet) {
 		self.recvPackets.AddPacketFromReceivePacket(i)
 		if(model.DataFrameType.GetByte() == i.FrameType){
 			dataFrame := frame.NewDATAFromReceiveBinary(i.FrameData)
-			self.FileCollector.SetData(dataFrame.Data[0], i.Offset, dataFrame.Data[2:])
-			if(model.FileFinFrameType.GetByte() == dataFrame.Data[1]){
-				if(self.FileCollector.GetFinishFlag(dataFrame.Data[0])){
-					if(self.FileCollector.IsFilePacketComplete(dataFrame.Data[0])){
-						self.FileCollector.MakeFile(dataFrame.Data[0])
+			fid := binary.LittleEndian.Uint32(dataFrame.Data[:4])
+			self.FileCollector.SetData(fid, i.Offset, dataFrame.Data[5:])
+			if(model.FileFinFrameType.GetByte() == dataFrame.Data[4]){
+				if(self.FileCollector.GetFinishFlag(fid)){
+					if(self.FileCollector.IsFilePacketComplete(fid)){
+						self.FileCollector.MakeFile(fid)
 					}
 				}
 			}
-			if(model.FileFinFrameType.GetByte() == dataFrame.Data[1]){
+			if(model.FileFinFrameType.GetByte() == dataFrame.Data[4]){
 				//fmt.Print("receive fin")
-				if(self.FileCollector.IsFilePacketComplete(dataFrame.Data[0])){
-					self.FileCollector.MakeFile(dataFrame.Data[0])
+				if(self.FileCollector.IsFilePacketComplete(fid)){
+					self.FileCollector.MakeFile(fid)
 				}
 			}
-			if(model.FileDataWithFinFrameType.GetByte() == dataFrame.Data[1]){
+			if(model.FileDataWithFinFrameType.GetByte() == dataFrame.Data[4]){
 				//fmt.Print("receive fin")
-				self.FileCollector.SetData(dataFrame.Data[0], i.Offset, dataFrame.Data[2:])
-				if(self.FileCollector.IsFilePacketComplete(dataFrame.Data[0])){
-					self.FileCollector.MakeFile(dataFrame.Data[0])
+				self.FileCollector.SetData(fid, i.Offset, dataFrame.Data[5:])
+				if(self.FileCollector.IsFilePacketComplete(fid)){
+					self.FileCollector.MakeFile(fid)
 				}
 			}
 

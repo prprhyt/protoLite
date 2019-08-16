@@ -28,28 +28,20 @@ func main() {
 		}
 	}()
 	defer client.Close()
-	var i byte = 0x01
-	var j int = 0
+	var i uint32 = 1
 	for;;{
 		//go func(){
-		if 1000<(int(i)+j){
+		if 1000<(int(i)){
 			break
 		}
 
-			a:=model.GetDataArrayFileFromFilePath("src/"+strconv.Itoa(int(i)+j)+".bin",i)
+			a:=model.GetDataArrayFileFromFilePath("src/"+strconv.Itoa(int(i))+".bin",i)
 			//fmt.Println("filePacketsNum:"+strconv.Itoa(len(a)))
 			for _,e := range a{
 				client.Send(e)
 				time.Sleep(5 * time.Millisecond)
 			}
-			if 0xff==i{
-				i=0x01
-				j+=255
-				//prof.Stop()
-				//break
-			}else{
-				i+=0x01
-			}
+			i+=1
 			//time.Sleep(20 * time.Millisecond)
 		//}()
 	}
