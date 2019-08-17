@@ -78,10 +78,14 @@ func(self *FileCollector)IsFilePacketComplete(id uint32) bool{
 		}
 		length+=uint32(len(self.Data[i]))
 	}
-	return true //length*8>=self.FileLength[id] //true
+	//a:=length
+	//b:=self.FileLength[id]
+	return true
 }
 
 func(self *FileCollector) MakeFile(id uint32){
+	//a := self.IsFilePacketComplete(id)
+	//print(a)
 	data := []byte{}
 	for i := self.StartEndOffset[id][0];i<uint32(len(self.Data[id]))+self.StartEndOffset[id][0];i++{
 		data = append(data, self.Data[id][i]...)
